@@ -7,4 +7,4 @@ PATH = Path(sys.argv[1])
 
 for dir in PATH.glob("**"):
 	designName = str(dir).split("/")[-1]
-	designName
+	print(designName)
