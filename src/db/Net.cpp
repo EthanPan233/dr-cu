@@ -1,8 +1,7 @@
 #include "Net.h"
-
 #include <fstream>
-
 #include "Setting.h"
+#include <iostream>
 
 namespace db {
     
@@ -183,10 +182,17 @@ void NetList::init(RsynService& rsynService) {
     if (db::setting.dbVerbose >= +db::VerboseLevelT::MIDDLE) {
         log() << "Init NetList ..." << std::endl;
     }
+    std::ofstream netPinsFile (db::setting.outputFile + ".netPins");
     nets.clear();
     nets.reserve(rsynService.design.getNumNets());
     int numPins = 0;
     for (Rsyn::Net net : rsynService.module.allNets()) {
+        Net dbNet = Net(nets.size(), net, rsynService);
+        for (auto pinAccessBox : dbNet.pinAccessBoxes) {
+            for (auto box : pinAccessBox) {
+                netPinsFile << box.layerIdx << " " << box.lx() << " " << box.hx() << " " << box.ly() << " " << box.hy() << std::endl;
+            }
+        }
         switch(net.getUse()) {
             case Rsyn::POWER:
                 continue;
@@ -203,6 +209,7 @@ void NetList::init(RsynService& rsynService) {
         log() << "The number of pins is " << numPins << std::endl;
         log() << std::endl;
     }
+    netPinsFile.close();
 }
 
 void NetList::writeNetTopo(const std::string& filename) {

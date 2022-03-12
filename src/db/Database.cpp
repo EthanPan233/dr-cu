@@ -1,6 +1,8 @@
 #include "Database.h"
 #include "rsyn/io/parser/lef_def/DEFControlParser.h"
 #include "single_net/PinTapConnector.h"
+#include <iostream>
+#include <fstream>
 
 db::Database database;
 
@@ -284,6 +286,9 @@ void Database::markPinAndObsOccupancy() {
     if (db::setting.dbVerbose >= +db::VerboseLevelT::MIDDLE) {
         log() << "Mark pin & obs occupancy on RouteGrid ..." << std::endl;
     }
+    std::ofstream unUsedPinsFile (db::setting.outputFile + ".unUsedPins");
+    std::ofstream obsFile (db::setting.outputFile + ".obs");
+    std::ofstream sNetsFile (db::setting.outputFile + ".specialNets");
     vector<std::pair<BoxOnLayer, int>> fixedMetalVec;
 
     // STEP 1: get fixed objects
@@ -319,6 +324,7 @@ void Database::markPinAndObsOccupancy() {
                 vector<BoxOnLayer> accessBoxes;
                 Net::getPinAccessBoxes(phLibPin, phCell, accessBoxes, origin);
                 for (const auto& box : accessBoxes) {
+                    unUsedPinsFile << box.layerIdx << " " << box.lx() << " " << box.hx() << " " << box.ly() << " " << box.hy() << std::endl;
                     fixedMetalVec.emplace_back(box, OBS_NET_IDX);
                 }
                 ++numUnusedPins;
@@ -335,6 +341,7 @@ void Database::markPinAndObsOccupancy() {
                 bounds = transform.apply(bounds);
                 const BoxOnLayer box(layerIdx, getBoxFromRsynBounds(bounds));
                 fixedMetalVec.emplace_back(box, OBS_NET_IDX);
+                obsFile << box.layerIdx << " " << box.lx() << " " << box.hx() << " " << box.ly() << " " << box.hy() << std::endl;
                 ++numObs;
             }
         }
@@ -362,6 +369,7 @@ void Database::markPinAndObsOccupancy() {
                             box[1 - dim].Set(pos[1 - dim] - width / 2, pos[1 - dim] + width / 2);
                             fixedMetalVec.emplace_back(box, OBS_NET_IDX);
                             ++numSNetObs;
+                            sNetsFile << box.layerIdx << " " << box.lx() << " " << box.hx() << " " << box.ly() << " " << box.hy() << std::endl;
                             break;
                         }
                     }
@@ -376,6 +384,7 @@ void Database::markPinAndObsOccupancy() {
                         const BoxOnLayer box(botLayerIdx, getBoxFromRsynBounds(bounds));
                         fixedMetalVec.emplace_back(box, OBS_NET_IDX);
                         ++numSNetObs;
+                        sNetsFile << box.layerIdx << " " << box.lx() << " " << box.hx() << " " << box.ly() << " " << box.hy() << std::endl;
                     }
                     const int topLayerIdx = via.getTopLayer().getRelativeIndex();
                     for (const Rsyn::PhysicalViaGeometry& geo : via.allTopGeometries()) {
@@ -384,6 +393,7 @@ void Database::markPinAndObsOccupancy() {
                         const BoxOnLayer box(topLayerIdx, getBoxFromRsynBounds(bounds));
                         fixedMetalVec.emplace_back(box, OBS_NET_IDX);
                         ++numSNetObs;
+                        sNetsFile << box.layerIdx << " " << box.lx() << " " << box.hx() << " " << box.ly() << " " << box.hy() << std::endl;
                     }
                     if (via.hasViaRule()) {
                         const utils::PointT<int> numRowCol =
@@ -408,6 +418,8 @@ void Database::markPinAndObsOccupancy() {
                         fixedMetalVec.emplace_back(botBox, OBS_NET_IDX);
                         fixedMetalVec.emplace_back(topBox, OBS_NET_IDX);
                         numSNetObs += 2;
+                        sNetsFile << botBox.layerIdx << " " << botBox.lx() << " " << botBox.hx() << " " << botBox.ly() << " " << botBox.hy() << std::endl;
+                        sNetsFile << topBox.layerIdx << " " << topBox.lx() << " " << topBox.hx() << " " << topBox.ly() << " " << topBox.hy() << std::endl;
                     }
                     if (layerIdx == botLayerIdx)
                         layerIdx = topLayerIdx;
@@ -492,6 +504,9 @@ void Database::markPinAndObsOccupancy() {
         printlog("usePoorViaMap", usePoorViaMap);
     }
     initPoorViaMap(fixedMetalVec);
+    unUsedPinsFile.close();
+    obsFile.close();
+    sNetsFile.close();
 }
 
 void Database::addPinViaMetal(vector<std::pair<BoxOnLayer, int>>& fixedMetalVec) {
