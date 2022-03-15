@@ -1,3 +1,4 @@
+from statistics import linear_regression
 import numpy as np
 from PIL import Image
 import sys
@@ -78,7 +79,31 @@ def getViosInDBU(dir, rule):
 	logFile.close()
 	return vios
 		
-
+def getFeatsInDBU(dir, feature):
+	designName = str(dir).split("/")[-1]
+	print("Get " + feature + " of: " + str(dir))
+	longName = "ispd1" + designName.split('t')[0] + "_test" + designName.split("t")[1] + ".solution.def"
+	fileName = longName + "." + feature
+	file = open(os.path.join(dir, fileName))
+	res = []
+	lineList = file.read().splitlines()
+	count = 0
+	for line in lineList:
+		# count += 1
+		# if (count % 1000 == 0):
+		# 	print(count)
+		# line = file.readline()
+		# if not line:
+		# 	break
+		lineSplit = line.split(" ")
+		layer = int(lineSplit[0])
+		lx = int(lineSplit[1])
+		hx = int(lineSplit[2])
+		ly = int(lineSplit[3])
+		hy = int(lineSplit[4])
+		res.append([layer, lx, hx, ly, hy])
+	file.close()
+	return res
 
 for dir in PATH.glob("*"):
 	designName = str(dir).split("/")[-1]
@@ -91,3 +116,7 @@ for dir in PATH.glob("*"):
 	viaBotWireVios = getViosInDBU(dir, "viaBotWireVios")
 	viaTopViaVios = getViosInDBU(dir, "viaTopViaVios")
 	viaTopWireVios = getViosInDBU(dir, "viaTopWireVios")
+	netPins = getFeatsInDBU(dir, "netPins")
+	print(len(netPins))
+	obs = getFeatsInDBU(dir, "obs")
+	unUsedPins = getFeatsInDBU(dir, "unUsedPins")
