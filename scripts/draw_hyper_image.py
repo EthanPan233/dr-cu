@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 
 PATH = Path(sys.argv[1])
+tileSize = int(sys.argv[2])
 
 designDBUs = {
 	"8t1" : ((0, 390800), (0, 383040)),
@@ -98,6 +99,17 @@ def getFeatsInDBU(dir, feature):
 	file.close()
 	return res
 
+def generateHyperImg(dir, netPins, obs, unUsedPins):
+	designName = str(dir).split("/")[-1]
+	sizeDBU = designDBUs[designName]
+	xSizeDBU = sizeDBU[0][1] - sizeDBU[0][0]
+	ySizeDBU = sizeDBU[1][1] - sizeDBU[1][0]
+	grSize = (xSizeDBU // tileSize, ySizeDBU // tileSize)
+	image = np.zeros(3, grSize[0], grSize[1])
+	for pinBox in netPins:
+
+
+
 for dir in PATH.glob("*"):
 	designName = str(dir).split("/")[-1]
 	# longName = "ispd1" + designName.split('t')[0] + "_test" + designName.split("t")[1] + ".solution.def"
@@ -110,6 +122,7 @@ for dir in PATH.glob("*"):
 	viaTopViaVios = getViosInDBU(dir, "viaTopViaVios")
 	viaTopWireVios = getViosInDBU(dir, "viaTopWireVios")
 	netPins = getFeatsInDBU(dir, "netPins")
-	print(len(netPins))
+	# print(len(netPins))
 	obs = getFeatsInDBU(dir, "obs")
 	unUsedPins = getFeatsInDBU(dir, "unUsedPins")
+	generateHyperImg(dir, netPins, obs, unUsedPins)
