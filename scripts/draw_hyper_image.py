@@ -87,14 +87,7 @@ def getFeatsInDBU(dir, feature):
 	file = open(os.path.join(dir, fileName))
 	res = []
 	lineList = file.read().splitlines()
-	count = 0
 	for line in lineList:
-		# count += 1
-		# if (count % 1000 == 0):
-		# 	print(count)
-		# line = file.readline()
-		# if not line:
-		# 	break
 		lineSplit = line.split(" ")
 		layer = int(lineSplit[0])
 		lx = int(lineSplit[1])
